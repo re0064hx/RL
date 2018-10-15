@@ -1,1 +1,1 @@
-# RL
+This programs is simple car simulator for Reinforcement Learning.
