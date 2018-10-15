@@ -1,1 +1,1 @@
-This programs is simple car simulator for Reinforcement Learning.
+This programs are simple car simulator for Reinforcement Learning.
