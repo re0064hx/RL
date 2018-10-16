@@ -5,7 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as ani
 from keras.models import Sequential
-from keras.layers import Dense
+from keras.layers import Dense, Flatten
 from keras.optimizers import Adam
 from keras.utils import plot_model
 from collections import deque
@@ -34,7 +34,7 @@ batch_size = 32                # Q-networkを更新するバッチの大記載
 class QNetwork:
     def __init__(self, learning_rate=0.01, state_size=5, action_size=2, hidden_size=10):
         self.model = Sequential()
-        self.model.add(Dense(hidden_size, input_dim=state_size, activation='relu'))
+        self.model.add(Dense(hidden_size, input_dim = state_size, activation='relu'))
         self.model.add(Dense(hidden_size, activation='relu'))
         self.model.add(Dense(action_size, activation='linear'))
         self.optimizer = Adam(lr=learning_rate)  # 誤差を減らす学習方法はAdam
@@ -44,13 +44,12 @@ class QNetwork:
 
     # 重みの学習
     def replay(self, memory, batch_size, gamma, targetQN):
-        inputs = np.zeros((batch_size, 4))
+        inputs = np.zeros((batch_size, 5))
         targets = np.zeros((batch_size, 2))
         mini_batch = memory.sample(batch_size)
 
         for i, (state_b, action_b, reward_b, next_state_b) in enumerate(mini_batch):
-            # inputs[i:i + 1] = state_b
-            inputs[i+1:i] = state_b
+            inputs[i:i + 1] = state_b
             target = reward_b
 
             if not (next_state_b == np.zeros(state_b.shape)).all(axis=1):
@@ -86,8 +85,7 @@ class Actor:
 
         if epsilon <= np.random.uniform(0, 1):
             print(state.shape)
-            # retTargetQs = targetQN.model.predict(state)[0]  # エラー発生箇所
-            retTargetQs = targetQN.model.predict(np.array([0, 0, 0, 0, 0]))
+            retTargetQs = targetQN.model.predict(state)[0]  # エラー発生箇所
             action = np.argmax(retTargetQs)  # 最大の報酬を返す行動を選択する
 
         else:
@@ -116,7 +114,7 @@ def main():
     # Qネットワークとメモリ、Actorの生成--------------------------------------------------------
     mainQN = QNetwork(hidden_size=hidden_size, learning_rate=learning_rate)     # メインのQネットワーク
     targetQN = QNetwork(hidden_size=hidden_size, learning_rate=learning_rate)   # 価値を計算するQネットワーク
-    # plot_model(mainQN.model, to_file='Qnetwork.png', show_shapes=True)        # Qネットワークの可視化
+    plot_model(mainQN.model, to_file='Qnetwork.png', show_shapes=True)        # Qネットワークの可視化
     memory = Memory(max_size=memory_size)
     actor = Actor()
 
@@ -148,7 +146,7 @@ def main():
             action = actor.get_action(state, episode, mainQN)   # 時刻tでの行動を決定する
             next_state, reward, done = Car0.step(V, action)
             print(next_state)
-            drawer.plot_rectangle(Car0)
+            # drawer.plot_rectangle(Car0)
             # print('\r Episode:%4d, LoopTime:%4d' % (episode, i), end='')
 
             # 報酬を設定し、与える

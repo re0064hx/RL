@@ -16,7 +16,6 @@ from keras import backend as K
 def huberloss(y_true, y_pred):
     return K.mean(K.minimum(0.5*K.square(y_pred-y_true), K.abs(y_pred-y_true)-0.5), axis=1)
 
-
 # [2]Q関数をディープラーニングのネットワークをクラスとして定義
 class QNetwork:
     def __init__(self, learning_rate=0.01, state_size=4, action_size=2, hidden_size=10):
@@ -72,7 +71,6 @@ class Actor:
         epsilon = 0.001 + 0.9 / (1.0+episode)
 
         if epsilon <= np.random.uniform(0, 1):
-            print(state.shape)
             retTargetQs = targetQN.model.predict(state)[0]
             action = np.argmax(retTargetQs)  # 最大の報酬を返す行動を選択する
 
@@ -105,7 +103,7 @@ batch_size = 32                # Q-networkを更新するバッチの大記載
 # [5.2]Qネットワークとメモリ、Actorの生成--------------------------------------------------------
 mainQN = QNetwork(hidden_size=hidden_size, learning_rate=learning_rate)     # メインのQネットワーク
 targetQN = QNetwork(hidden_size=hidden_size, learning_rate=learning_rate)   # 価値を計算するQネットワーク
-# plot_model(mainQN.model, to_file='Qnetwork.png', show_shapes=True)        # Qネットワークの可視化
+plot_model(mainQN.model, to_file='Qnetwork.png', show_shapes=True)        # Qネットワークの可視化
 memory = Memory(max_size=memory_size)
 actor = Actor()
 
@@ -114,6 +112,7 @@ for episode in range(num_episodes):  # 試行数分繰り返す
     env.reset()  # cartPoleの環境初期化
     state, reward, done, _ = env.step(env.action_space.sample())  # 1step目は適当な行動をとる
     state = np.reshape(state, [1, 4])   # list型のstateを、1行4列の行列に変換
+    print(state)
     episode_reward = 0
 
     targetQN = mainQN   # 行動決定と価値計算のQネットワークをおなじにする
