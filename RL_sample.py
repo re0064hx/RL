@@ -35,7 +35,7 @@ batch_size = 32                # Q-networkを更新するバッチの大記載
 class QNetwork:
     def __init__(self, learning_rate=0.01, state_size=5, action_size=2, hidden_size=10):
         self.model = Sequential()
-        self.model.add(Dense(hidden_size, activation='relu', input_dim=state_size))
+        self.model.add(Dense(hidden_size, input_dim=state_size, activation='relu'))
         self.model.add(Dense(hidden_size, activation='relu'))
         self.model.add(Dense(action_size, activation='linear'))
         self.optimizer = Adam(lr=learning_rate)  # 誤差を減らす学習方法はAdam
@@ -105,13 +105,11 @@ def huberloss(y_true, y_pred):
 def main():
     # Set sampling time
     dt = 0.05
-
     '''
     === Deep Q-learning ===
     State   :   x, y, vx, vy, theta
     Action  :   V, YR
     '''
-
     # Qネットワークとメモリ、Actorの生成--------------------------------------------------------
     mainQN = QNetwork(hidden_size=hidden_size, learning_rate=learning_rate)     # メインのQネットワーク
     targetQN = QNetwork(hidden_size=hidden_size, learning_rate=learning_rate)   # 価値を計算するQネットワーク
@@ -133,9 +131,11 @@ def main():
         #描画インスタンス作成
         drawer = env.Animation()
 
+        state = np.zeros((5,1))
+        print(state)
+
         state, reward, done = Car0.step(random.uniform(0,30), random.uniform(-0.5*np.pi,0.5*np.pi))
         episode_reward = 0
-
         targetQN = mainQN   # 行動決定と価値計算のQネットワークをおなじにする
 
         while not terminal:
@@ -148,7 +148,7 @@ def main():
 
             action = actor.get_action(state, episode, mainQN)   # 時刻tでの行動を決定する
             next_state, reward, done = Car0.step(V, action)
-            print(state)
+            print(next_state)
             drawer.plot_rectangle(Car0)
             # print('\r Episode:%4d, LoopTime:%4d' % (episode, i), end='')
 
