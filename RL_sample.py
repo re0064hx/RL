@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import time
 import random
+import os.path
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as ani
@@ -14,7 +15,7 @@ from keras import backend as K
 import tensorflow as tf
 import simulator as env
 
-NUM_EPISODES = 1000
+NUM_EPISODES = 10000
 MAXSTEP = 100
 DQN_MODE = 1    # 1がDQN、0がDDQN
 LENDER_MODE = 1 # 0は学習後も描画なし、1は学習終了後に描画する
@@ -161,7 +162,7 @@ def main():
                 reward = 1  # maxstep超えて終了時は報酬
             else:
                 reward = 0
-                
+
             episode_reward += 1 # reward  # 合計報酬を更新
 
             memory.add((state, action, reward, next_state))     # メモリの更新する
@@ -182,7 +183,18 @@ def main():
             drawer.close_figure()
             print('')
 
-    # env.sim(Car0, drawer)
+    '''
+    Save Network
+    '''
+    f_log = './log'
+    f_model = './model'
+    print('save the architecture of a model')
+    json_string = mainQN.model.to_json()
+    open(os.path.join(f_model,'cnn_model.json'), 'w').write(json_string)
+    yaml_string = mainQN.model.to_yaml()
+    open(os.path.join(f_model,'cnn_model.yaml'), 'w').write(yaml_string)
+    print('save weights')
+    mainQN.model.save_weights(os.path.join(f_model,'cnn_model_weights.hdf5'))
 
 if __name__ == '__main__':
     main()
