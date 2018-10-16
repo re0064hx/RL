@@ -72,6 +72,7 @@ class Actor:
         epsilon = 0.001 + 0.9 / (1.0+episode)
 
         if epsilon <= np.random.uniform(0, 1):
+            print(state.shape)
             retTargetQs = targetQN.model.predict(state)[0]
             action = np.argmax(retTargetQs)  # 最大の報酬を返す行動を選択する
 

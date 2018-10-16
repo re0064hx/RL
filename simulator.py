@@ -30,6 +30,7 @@ class Vehicle():
         #                 [self.v_y],
         #                 [self.theta]])
         # state = np.array([self.y])
+        state = np.reshape(state, [1, 5])
         reward = 0
         done = True
         return state, reward, done

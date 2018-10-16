@@ -133,9 +133,6 @@ def main():
         #描画インスタンス作成
         drawer = env.Animation()
 
-        state = np.zeros((1, 5))
-        print(state)
-
         state, reward, done = Car0.step(random.uniform(0,30), random.uniform(-0.5*np.pi,0.5*np.pi))
         episode_reward = 0
         targetQN = mainQN   # 行動決定と価値計算のQネットワークをおなじにする
