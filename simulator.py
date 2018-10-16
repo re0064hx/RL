@@ -33,11 +33,11 @@ class Vehicle():
         state = np.reshape(state, [1, 5])
         reward = 0
 
-        if abs(self.x) > 5:
+        if abs(self.x) > 1:
             reward = -1
             done = True
         elif abs(self.y) > 50:
-            reward = -1
+            reward = 1
             done = True
         else:
             reward = 0

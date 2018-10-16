@@ -148,8 +148,9 @@ def main():
 
             next_state, reward, done = Car0.step(V, YR)
             # print(next_state)
-            drawer.plot_rectangle(Car0)
-            # print('\r Episode:%4d, LoopTime:%4d' % (episode, i), end='')
+            if i == NUM_EPISODES:
+                drawer.plot_rectangle(Car0)
+            print('\r Episode:%4d, LoopTime:%4d' % (episode, i), end='')
 
             # 報酬を設定し、与える
             if done:
@@ -159,8 +160,8 @@ def main():
                 next_state = np.zeros(state.shape)  # 次の状態s_{t+1}はない
                 reward = 1  # maxstep超えて終了時は報酬
             else:
-                reward = 0  # 各ステップで立ってたら報酬追加（はじめからrewardに1が入っているが、明示的に表す）
-
+                reward = 0
+                
             episode_reward += 1 # reward  # 合計報酬を更新
 
             memory.add((state, action, reward, next_state))     # メモリの更新する
@@ -175,7 +176,6 @@ def main():
 
             if i == MAXSTEP:
                 terminal = True
-
                 drawer.close_figure()
 
         if i == NUM_EPISODES:
