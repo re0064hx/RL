@@ -29,6 +29,7 @@ class Vehicle():
                         [self.v_x],
                         [self.v_y],
                         [self.theta]])
+        # state = np.array([self.y])
         reward = 0
         done = True
         return state, reward, done

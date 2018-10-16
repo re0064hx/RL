@@ -30,7 +30,6 @@ learning_rate = 0.00001         # Q-networkの学習係数
 memory_size = 10000            # バッファーメモリの大きさ
 batch_size = 32                # Q-networkを更新するバッチの大記載
 
-
 # Q関数をディープラーニングのネットワークをクラスとして定義
 class QNetwork:
     def __init__(self, learning_rate=0.01, state_size=5, action_size=2, hidden_size=10):
@@ -40,7 +39,9 @@ class QNetwork:
         self.model.add(Dense(action_size, activation='linear'))
         self.optimizer = Adam(lr=learning_rate)  # 誤差を減らす学習方法はAdam
         # self.model.compile(loss='mse', optimizer=self.optimizer)
+        # self.model.compile(loss=huberloss, optimizer=self.optimizer)
         self.model.compile(loss=huberloss, optimizer=self.optimizer)
+
 
     # 重みの学習
     def replay(self, memory, batch_size, gamma, targetQN):
@@ -84,11 +85,12 @@ class Actor:
         epsilon = 0.001 + 0.9 / (1.0+episode)
 
         if epsilon <= np.random.uniform(0, 1):
-            retTargetQs = targetQN.model.predict(state)[0]
+            print(state.shape)
+            retTargetQs = targetQN.model.predict(state)[0]  # エラー発生箇所
             action = np.argmax(retTargetQs)  # 最大の報酬を返す行動を選択する
 
         else:
-            action = np.random.choice([0, 1])  # ランダムに行動する
+            action = np.random.choice([-0.1, 0.1])  # ランダムに行動する
 
         return action
 
@@ -117,7 +119,6 @@ def main():
     memory = Memory(max_size=memory_size)
     actor = Actor()
 
-
     for episode in range(NUM_EPISODES):
         terminal = False
         i = 0
@@ -131,7 +132,7 @@ def main():
         #描画インスタンス作成
         drawer = env.Animation()
 
-        state = np.zeros((5,1))
+        state = np.zeros((5, 1))
         print(state)
 
         state, reward, done = Car0.step(random.uniform(0,30), random.uniform(-0.5*np.pi,0.5*np.pi))
@@ -158,7 +159,7 @@ def main():
                 if i < MAXSTEP:
                     reward = -1  # 報酬クリッピング、報酬は1, 0, -1に固定
                 else:
-                    reward = 1  # 立ったまま195step超えて終了時は報酬
+                    reward = 1  # maxstep超えて終了時は報酬
             else:
                 reward = 0  # 各ステップで立ってたら報酬追加（はじめからrewardに1が入っているが、明示的に表す）
 
@@ -184,7 +185,6 @@ def main():
             print('')
 
     # env.sim(Car0, drawer)
-
 
 if __name__ == '__main__':
     main()
