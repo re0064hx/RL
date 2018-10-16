@@ -38,8 +38,7 @@ class QNetwork:
         self.model.add(Dense(hidden_size, activation='relu'))
         self.model.add(Dense(action_size, activation='linear'))
         self.optimizer = Adam(lr=learning_rate)  # 誤差を減らす学習方法はAdam
-        # self.model.compile(loss='mse', optimizer=self.optimizer)
-        # self.model.compile(loss=huberloss, optimizer=self.optimizer)
+        self.model.compile(loss='binary_crossentropy', optimizer=self.optimizer)
         self.model.compile(loss=huberloss, optimizer=self.optimizer)
 
 
@@ -50,7 +49,8 @@ class QNetwork:
         mini_batch = memory.sample(batch_size)
 
         for i, (state_b, action_b, reward_b, next_state_b) in enumerate(mini_batch):
-            inputs[i:i + 1] = state_b
+            # inputs[i:i + 1] = state_b
+            inputs[i+1:i] = state_b
             target = reward_b
 
             if not (next_state_b == np.zeros(state_b.shape)).all(axis=1):
@@ -86,7 +86,8 @@ class Actor:
 
         if epsilon <= np.random.uniform(0, 1):
             print(state.shape)
-            retTargetQs = targetQN.model.predict(state)[0]  # エラー発生箇所
+            # retTargetQs = targetQN.model.predict(state)[0]  # エラー発生箇所
+            retTargetQs = targetQN.model.predict(np.array([0, 0, 0, 0, 0]))
             action = np.argmax(retTargetQs)  # 最大の報酬を返す行動を選択する
 
         else:
@@ -132,7 +133,7 @@ def main():
         #描画インスタンス作成
         drawer = env.Animation()
 
-        state = np.zeros((5, 1))
+        state = np.zeros((1, 5))
         print(state)
 
         state, reward, done = Car0.step(random.uniform(0,30), random.uniform(-0.5*np.pi,0.5*np.pi))
