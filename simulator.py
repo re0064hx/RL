@@ -21,6 +21,13 @@ class Vehicle():
         self.y += V*np.cos(self.theta) * self.dt # lateral coordinate value
         self.theta += YR * self.dt
 
+    def step(self, V, YR):
+        self.state_update(V, YR)
+        state = np.array((self.x, self.y, self.v_x, self.v_y, self.theta))
+        reward = 0
+        done = True
+        return state, reward, done
+
 
 class Animation():
     def __init__(self):
