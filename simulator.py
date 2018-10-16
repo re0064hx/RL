@@ -31,12 +31,11 @@ class Vehicle():
         #                 [self.theta]])
         # state = np.array([self.y])
         state = np.reshape(state, [1, 5])
-        reward = 0
 
-        if abs(self.x) > 1:
+        if abs(self.x) > 0.5:
             reward = -1
             done = True
-        elif abs(self.y) > 50:
+        elif abs(self.y) > 30:
             reward = 1
             done = True
         else:

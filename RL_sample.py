@@ -5,7 +5,7 @@ import os.path
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as ani
-from keras.models import Sequential
+from keras.models import Sequential, model_from_json
 from keras.layers import Dense, Flatten
 from keras.optimizers import Adam
 from keras.utils import plot_model
@@ -15,16 +15,14 @@ from keras import backend as K
 import tensorflow as tf
 import simulator as env
 
-NUM_EPISODES = 10000
+NUM_EPISODES = 100
 MAXSTEP = 100
-DQN_MODE = 1    # 1がDQN、0がDDQN
+DQN_MODE = 0   # 1がDQN、0がDDQN
 LENDER_MODE = 1 # 0は学習後も描画なし、1は学習終了後に描画する
-GOAL_AVERAGE_REWARD = 195  # この報酬を超えると学習終了
-NUM_CONSECUTIVE_ITERATIONS = 10  # 学習完了評価の平均計算を行う試行回数
-TOTAL_REWARD_VEC = np.zeros(NUM_CONSECUTIVE_ITERATIONS)  # 各試行の報酬を格納
 GAMMA = 0.99    # 割引係数
 ISLEARNED = 0  # 学習が終わったフラグ
 ISRENDER = 0  # 描画フラグ
+LOAD_NETWORK = False
 # ---
 HIDDEN_SIZE = 16               # Q-networkの隠れ層のニューロンの数
 LEARNING_RATE = 0.00001         # Q-networkの学習係数
@@ -33,7 +31,7 @@ BATCH_SIZE = 32                # Q-networkを更新するバッチの大記載
 
 # Q関数をディープラーニングのネットワークをクラスとして定義
 class QNetwork:
-    def __init__(self, LEARNING_RATE=0.01, state_size=5, action_size=2, HIDDEN_SIZE=10):
+    def __init__(self, LEARNING_RATE=0.01, state_size=5, action_size=9, HIDDEN_SIZE=10):
         self.model = Sequential()
         self.model.add(Dense(HIDDEN_SIZE, input_dim = state_size, activation='relu'))
         self.model.add(Dense(HIDDEN_SIZE, activation='relu'))
@@ -45,7 +43,7 @@ class QNetwork:
     # 重みの学習
     def replay(self, memory, BATCH_SIZE, GAMMA, targetQN):
         inputs = np.zeros((BATCH_SIZE, 5))
-        targets = np.zeros((BATCH_SIZE, 2))
+        targets = np.zeros((BATCH_SIZE, 9))
         mini_batch = memory.sample(BATCH_SIZE)
 
         for i, (state_b, action_b, reward_b, next_state_b) in enumerate(mini_batch):
@@ -85,7 +83,8 @@ class Actor:
         epsilon = 0.001 + 0.9 / (1.0+episode)
 
         if epsilon <= np.random.uniform(0, 1):
-            retTargetQs = targetQN.model.predict(state)[0]  # エラー発生箇所
+            retTargetQs = targetQN.model.predict(state)[0]
+            # print(retTargetQs)
             action = np.argmax(retTargetQs)  # 最大の報酬を返す行動を選択する
 
         else:
@@ -106,6 +105,7 @@ def huberloss(y_true, y_pred):
 def main():
     # Set sampling time
     dt = 0.05
+    episode_reward = 0
     '''
     === Deep Q-learning ===
     State   :   x, y, vx, vy, theta
@@ -121,6 +121,16 @@ def main():
     for episode in range(NUM_EPISODES):
         terminal = False
         i = 0
+
+
+        f_log = './log'
+        f_model = './model'
+        model_filename = 'dqn_model.json'
+        weights_filename = 'dqn_model_weights.hdf5'
+        if LOAD_NETWORK:
+            json_string = open(os.path.join(f_model, model_filename)).read()
+            model = model_from_json(json_string)
+
         #車両インスタンス作成(車両座標系)
         # Initialization : (x, y, vx, vy, theta, length, width, dt)
         Car0 = env.Vehicle(0, 0, 10, 0, 0, 4.75, 1.75, dt)
@@ -132,38 +142,32 @@ def main():
         drawer = env.Animation()
 
         state, reward, done = Car0.step(random.uniform(0,30), random.uniform(-0.5*np.pi,0.5*np.pi))
-        episode_reward = 0
         targetQN = mainQN   # 行動決定と価値計算のQネットワークをおなじにする
 
         while not terminal:
             i += 1
+            episode_reward = 0
             V = 10
 
             action = actor.get_action(state, episode, mainQN)   # 時刻tでの行動を決定する
-            if action == 1:
-                YR = 0.1
-            elif action == 0:
-                YR = -0.1
-            else:
-                YR = 0
+            YR = -0.2 + action*0.05
 
             next_state, reward, done = Car0.step(V, YR)
             # print(next_state)
-            if i == NUM_EPISODES:
+            if episode == NUM_EPISODES-1:
                 drawer.plot_rectangle(Car0)
-            print('\r Episode:%4d, LoopTime:%4d' % (episode, i), end='')
 
-            # 報酬を設定し、与える
             if done:
                 terminal = True
                 drawer.close_figure()
 
                 next_state = np.zeros(state.shape)  # 次の状態s_{t+1}はない
-                reward = 1  # maxstep超えて終了時は報酬
-            else:
-                reward = 0
+                # reward = 1  # maxstep超えて終了時は報酬
+            # else:
+                # reward = 0
 
-            episode_reward += 1 # reward  # 合計報酬を更新
+            episode_reward += reward # 合計報酬を更新
+            print('\r Episode:%4d, LoopTime:%4d, Action:%d Reward:%f, Episode_reward:%f' % (episode, i, action, reward, episode_reward), end='')
 
             memory.add((state, action, reward, next_state))     # メモリの更新する
             state = next_state  # 状態更新
@@ -173,7 +177,7 @@ def main():
                  mainQN.replay(memory, BATCH_SIZE, GAMMA, targetQN)
 
             if DQN_MODE:
-                 targetQN = mainQN  # 行動決定と価値計算のQネットワークをおなじにする
+                targetQN = mainQN  # 行動決定と価値計算のQネットワークをおなじにする
 
             if i == MAXSTEP:
                 terminal = True
@@ -184,17 +188,15 @@ def main():
             print('')
 
     '''
-    Save Network
+    Save Network:
     '''
-    f_log = './log'
-    f_model = './model'
     print('save the architecture of a model')
     json_string = mainQN.model.to_json()
-    open(os.path.join(f_model,'cnn_model.json'), 'w').write(json_string)
+    open(os.path.join(f_model,'dqn_model.json'), 'w').write(json_string)
     yaml_string = mainQN.model.to_yaml()
-    open(os.path.join(f_model,'cnn_model.yaml'), 'w').write(yaml_string)
+    open(os.path.join(f_model,'dqn_model.yaml'), 'w').write(yaml_string)
     print('save weights')
-    mainQN.model.save_weights(os.path.join(f_model,'cnn_model_weights.hdf5'))
+    mainQN.model.save_weights(os.path.join(f_model,'dqn_model_weights.hdf5'))
 
 if __name__ == '__main__':
     main()
