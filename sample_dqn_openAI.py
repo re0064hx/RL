@@ -36,6 +36,7 @@ class QNetwork:
         for i, (state_b, action_b, reward_b, next_state_b) in enumerate(mini_batch):
             inputs[i:i + 1] = state_b
             target = reward_b
+            print(action_b)
 
             if not (next_state_b == np.zeros(state_b.shape)).all(axis=1):
                 # 価値計算（DDQNにも対応できるように、行動決定のQネットワークと価値観数のQネットワークは分離）
@@ -44,6 +45,7 @@ class QNetwork:
                 target = reward_b + gamma * targetQN.model.predict(next_state_b)[0][next_action]
 
             targets[i] = self.model.predict(state_b)    # Qネットワークの出力
+            # print(action_b)
             targets[i][action_b] = target               # 教師信号
             self.model.fit(inputs, targets, epochs=1, verbose=0)  # epochsは訓練データの反復回数、verbose=0は表示なしの設定
 
