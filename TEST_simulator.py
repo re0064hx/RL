@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import time
+import math
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
@@ -41,7 +42,7 @@ class Vehicle():
 
 
 class Animation():
-    def __init__(self):
+    def __init__(self, state_history):
         ## plot 初期化
         # グラフ仕様設定
         self.fig = plt.figure(figsize=(3,15))
@@ -53,8 +54,6 @@ class Animation():
         self.max_y = 100
         self.min_y = 0
 
-
-    def plot_rectangle(self, Car0, Car1, Car2, Car3, Car4):
         # Axes インスタンスを作成
         ax = self.fig.add_subplot(111)
 
@@ -74,20 +73,30 @@ class Animation():
         # 凡例
         # ax.legend()
 
-        # rectangle
-        rect_0 = patches.Rectangle((Car0.x-Car0.width/2, Car0.y-Car0.length/2),Car0.width,Car0.length,angle=Car0.theta,ec='r', fill=False)
-        rect_1 = patches.Rectangle((Car1.x-Car1.width/2, Car1.y-Car1.length/2),Car1.width,Car1.length,angle=Car1.theta,ec='b', fill=False)
-        rect_2 = patches.Rectangle((Car2.x-Car2.width/2, Car2.y-Car2.length/2),Car2.width,Car2.length,angle=Car2.theta,ec='b', fill=False)
-        rect_3 = patches.Rectangle((Car3.x-Car3.width/2, Car3.y-Car3.length/2),Car3.width,Car3.length,angle=Car3.theta,ec='b', fill=False)
-        rect_4 = patches.Rectangle((Car4.x-Car4.width/2, Car4.y-Car4.length/2),Car4.width,Car4.length,angle=Car4.theta,ec='b', fill=False)
-        ax.add_patch(rect_0)
-        ax.add_patch(rect_1)
-        ax.add_patch(rect_2)
-        ax.add_patch(rect_3)
-        ax.add_patch(rect_4)
-        plt.pause(.00001)
+        #学習時の状態データ
+        self.state_x = state_history[:,1]
+        self.state_y = state_history[:,2]
 
-        self.fig.delaxes(ax)
+    def plot_rectangle(self, center_x, center_y):
+        # 初期化
+        self.vehicle_x = [] #位置を表す円のx
+        self.vehicle_y = [] #位置を表す円のy
+        circle_size = 0.5
+        steps = 100 #円を書く分解能はこの程度で大丈夫
+        for i in range(steps):
+            self.vehicle_x.append(center_x + circle_size*math.cos(i*2*math.pi/steps))
+            self.vehicle_y.append(center_y + circle_size*math.sin(i*2*math.pi/steps))
+
+        self.vehicle_img.set_data(self.vehicle_x, self.vehicle_y)
+
+
+
+    def update_anim(self, i):
+        X = self.state_x[i]
+        Y = self.state_y[i]
+        print(X, Y)
+        vehicle_img = self.plot_rectangle(X, Y)
+        return vehicle_img,
 
 
     def change_aspect_ratio(self, ax, ratio):

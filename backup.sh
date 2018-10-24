@@ -8,7 +8,7 @@ yes_or_no_while(){
         case $answer in
             yes)
                 echo -e "tyeped yes.\n"
-                git add *.*
+                git add *
                 git commit -m "Modified by MK."
                 git push
                 return 0

@@ -97,6 +97,45 @@ class Actor:
 
         return action
 
+class Drawing():
+    def __init__(self, ax):
+        self.color = []
+        self.ax = ax
+        self.vehicle_img, = ax.plot([], [], color="b")
+
+    def draw_vehicle(self, center_x, center_y, circle_size=0.2):#人の大きさは半径15cm
+        # 初期化
+        self.vehicle_x = [] #位置を表す円のx
+        self.vehicle_y = [] #位置を表す円のy
+
+        steps = 100 #円を書く分解能はこの程度で大丈夫
+        for i in range(steps):
+            self.vehicle_x.append(center_x + circle_size*math.cos(i*2*math.pi/steps))
+            self.vehicle_y.append(center_y + circle_size*math.sin(i*2*math.pi/steps))
+
+        self.vehicle_img.set_data(self.vehicle_x, self.vehicle_y)
+
+        return self.vehicle_img,
+
+def update_anim(i):# このiが更新するたびに増えていきます
+
+    vehicle_img, = drawer.draw_vehicle(vehicle_x, vehicle_y)
+
+    return vehicle_img,
+
+def change_aspect_ratio(ax, ratio):
+    '''
+    This function change aspect ratio of figure.
+    Parameters:
+        ax: ax (matplotlit.pyplot.subplots())
+            Axes object
+        ratio: float or int
+            relative x axis width compared to y axis width.
+    '''
+    aspect = (1/ratio) *(ax.get_xlim()[1] - ax.get_xlim()[0]) / (ax.get_ylim()[1] - ax.get_ylim()[0])
+    ax.set_aspect(aspect)
+
+
 # 損失関数の定義
 # 損失関数にhuber関数を使用します 参考https://github.com/jaara/AI-blog/blob/master/CartPole-DQN.py
 def huberloss(y_true, y_pred):
@@ -119,6 +158,12 @@ def save_network(mainQN, targetQN):
     open(os.path.join(f_model,'dqn_model.yaml'), 'w').write(yaml_string)
     print('save weights')
     mainQN.model.save_weights(os.path.join(f_model,'dqn_model_weights.hdf5'))
+
+def update_anim(i):# このiが更新するたびに増えていきます
+
+    vehicle_img, = drawer.draw_vehicle(vehicle_x, vehicle_y)
+
+    return vehicle_img,
 
 def main():
     # Set sampling time
@@ -175,7 +220,7 @@ def main():
 
             # if (episode%100) == 0:		# Drawing Setting
             #     drawer.plot_rectangle(Car0)
-            drawer.plot_rectangle(Car0, Car1, Car2, Car3, Car4)
+            # drawer.plot_rectangle(Car0, Car1, Car2, Car3, Car4)
 
 
             if done:
@@ -202,8 +247,58 @@ def main():
                 print('terminated!')
                 terminal = True
                 drawer.close_figure()
-            # if done:
+            if done:
+                ## plot 初期化
+                # グラフ仕様設定
+                fig = plt.figure()
 
+                # Axes インスタンスを作成
+                ax = fig.add_subplot(111)
+
+                # 軸
+                # 最大値と最小値⇒軸の範囲設定
+                max_x = 5
+                min_x = -5
+                max_y = 50
+                min_y = -50
+
+                ax.set_xlim(min_x, max_x)
+                ax.set_ylim(min_y, max_y)
+
+                # # 軸の縦横比, 正方形，単位あたりの長さを等しくする
+                # ax.set_aspect('equal')
+
+                # 軸の名前設定
+                ax.set_xlabel('X [m]')
+                ax.set_ylabel('Y [m]')
+
+                # その他グラフ仕様
+                ax.grid(True) # グリッド
+
+                # 凡例
+                ax.legend()
+
+                # ステップ数表示
+                step_text = ax.text(0.05, 0.9, '', transform=ax.transAxes)
+
+                # 初期設定
+                ego_vehicle_img, = ax.plot([], [], label='Predicit', color="b")
+                # ego_vehicle_img, = plt.Rectangle(xy=(0, 0), width=4.75, height=1.75, ec='#000000', fill=True)
+                change_aspect_ratio(ax, 1/5) # 横を1/5倍長く（縦を5倍長く）設定
+
+                # クラス（ボール作成）
+                ego_vehicle = Vehicle(0, 0, 0, 5, 4.75/2, 1.75/2, 0.05) # インスタンス作成
+                drawer = Drawing(ax)
+
+                animation = ani.FuncAnimation(fig, update_anim, interval=50, frames=10000)
+
+                # print('save_animation?')
+                # shuold_save_animation = int(input())
+
+                # if shuold_save_animation == True:
+                #     animation.save('basic_animation.mp4', writer='ffmpeg')
+
+                plt.show()
 
 
             if (episode%100) == 0:		# Drawing Setting

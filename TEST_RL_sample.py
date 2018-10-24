@@ -4,7 +4,7 @@ import random
 import os.path
 import numpy as np
 import matplotlib.pyplot as plt
-import matplotlib.animation as animation
+import matplotlib.animation as anim
 from keras.models import Sequential, model_from_json
 from keras.layers import Dense, Flatten
 from keras.optimizers import Adam
@@ -13,7 +13,7 @@ from collections import deque
 from gym import wrappers  # gymの画像保存
 from keras import backend as K
 import tensorflow as tf
-import simulator as env
+import TEST_simulator as env
 
 NUM_EPISODES = 10000
 MAXSTEP = 100
@@ -120,6 +120,12 @@ def save_network(mainQN, targetQN):
     print('save weights')
     mainQN.model.save_weights(os.path.join(f_model,'dqn_model_weights.hdf5'))
 
+def update_anim(i):# このiが更新するたびに増えていきます
+
+    vehicle_img, = drawer.draw_vehicle(vehicle_x, vehicle_y)
+
+    return vehicle_img,
+
 def main():
     # Set sampling time
     dt = 0.05
@@ -152,8 +158,6 @@ def main():
         Car2 = env.Vehicle(-30, 1.75, 9, 0, 0, 4.75, 1.75, dt)
         Car3 = env.Vehicle(15, -1.75, 9, 0, 0, 4.75, 1.75, dt)
         Car4 = env.Vehicle(-15, -1.75, 9, 0, 0, 4.75, 1.75, dt)
-        #描画インスタンス作成
-        drawer = env.Animation()
 
         state, reward, done = Car0.step(random.uniform(0,30), random.uniform(-0.5*np.pi,0.5*np.pi))
         targetQN = mainQN   # 行動決定と価値計算のQネットワークをおなじにする
@@ -171,21 +175,22 @@ def main():
 
             next_state, reward, done = Car0.step(V, YR)
             # print(next_state)
-            state_history[i:,:] = next_state
+            state_history[i,:] = next_state
 
             # if (episode%100) == 0:		# Drawing Setting
             #     drawer.plot_rectangle(Car0)
-            drawer.plot_rectangle(Car0, Car1, Car2, Car3, Car4)
+            # drawer.plot_rectangle(Car0, Car1, Car2, Car3, Car4)
 
-
+            # エピソード終了時の処理
             if done:
                 terminal = True
-                drawer.close_figure()
-
+                # drawer.close_figure()
+                #描画インスタンス作成
+                print(state_history)
+                drawer = env.Animation(state_history)
+                animation = anim.FuncAnimation(drawer.fig, drawer.update_anim, interval=50, frames=10000)
+                plt.show(drawer.fig)
                 next_state = np.zeros(state.shape)  # 次の状態s_{t+1}はない
-                # reward = 1  # maxstep超えて終了時は報酬
-            # else:
-                # reward = 0
 
             episode_reward += reward # 合計報酬を更新
             print('\r Episode:%4d, LoopTime:%4d, Action:%d Reward:%f, Episode_reward:%f' % (episode, i, action, reward, episode_reward), end='')
@@ -201,10 +206,7 @@ def main():
             if i == MAXSTEP:
                 print('terminated!')
                 terminal = True
-                drawer.close_figure()
-            # if done:
-
-
+                # drawer.close_figure()
 
             if (episode%100) == 0:		# Drawing Setting
                 save_network(mainQN, targetQN)
