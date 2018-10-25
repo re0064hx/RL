@@ -120,12 +120,6 @@ def save_network(mainQN, targetQN):
     print('save weights')
     mainQN.model.save_weights(os.path.join(f_model,'dqn_model_weights.hdf5'))
 
-def update_anim(i):# このiが更新するたびに増えていきます
-
-    vehicle_img, = drawer.draw_vehicle(vehicle_x, vehicle_y)
-
-    return vehicle_img,
-
 def main():
     # Set sampling time
     dt = 0.05
@@ -171,26 +165,24 @@ def main():
             V = 10
 
             action = actor.get_action(state, episode, mainQN)   # 時刻tでの行動を決定する
-            YR = -0.2 + action*0.05
+            YR = -0.2 + action*0.05 # YRを９分割してアクションを決定
 
             next_state, reward, done = Car0.step(V, YR)
             # print(next_state)
             state_history[i,:] = next_state
 
-            # if (episode%100) == 0:		# Drawing Setting
-            #     drawer.plot_rectangle(Car0)
-            # drawer.plot_rectangle(Car0, Car1, Car2, Car3, Car4)
-
             # エピソード終了時の処理
             if done:
                 terminal = True
-                # drawer.close_figure()
+                # print(state_history)
                 #描画インスタンス作成
-                print(state_history)
-                drawer = env.Animation(state_history)
+                drawer = env.Animation(state_history,i)
                 animation = anim.FuncAnimation(drawer.fig, drawer.update_anim, interval=50, frames=10000)
                 plt.show(drawer.fig)
                 next_state = np.zeros(state.shape)  # 次の状態s_{t+1}はない
+                if i == MAXSTEP:
+                    print('terminated!')
+                drawer.close_figure()
 
             episode_reward += reward # 合計報酬を更新
             print('\r Episode:%4d, LoopTime:%4d, Action:%d Reward:%f, Episode_reward:%f' % (episode, i, action, reward, episode_reward), end='')
@@ -203,12 +195,9 @@ def main():
                  mainQN.replay(memory, BATCH_SIZE, GAMMA, targetQN)
             if DQN_MODE:
                 targetQN = mainQN  # 行動決定と価値計算のQネットワークをおなじにする
-            if i == MAXSTEP:
-                print('terminated!')
-                terminal = True
-                # drawer.close_figure()
 
-            if (episode%100) == 0:		# Drawing Setting
+
+            if (episode%10) == 0:		# Drawing Setting
                 save_network(mainQN, targetQN)
 
 

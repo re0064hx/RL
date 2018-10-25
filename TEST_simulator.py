@@ -18,7 +18,7 @@ class Vehicle():
         self.dt = dt
 
     def state_update(self, V, YR):
-        #座標系に注意
+        # 座標系に注意
         self.x += V*np.sin(self.theta) * self.dt # longitudinal coordinate value
         self.y += V*np.cos(self.theta) * self.dt # lateral coordinate value
         self.theta += YR * self.dt
@@ -42,7 +42,7 @@ class Vehicle():
 
 
 class Animation():
-    def __init__(self, state_history):
+    def __init__(self, state_history, num_loop):
         ## plot 初期化
         # グラフ仕様設定
         self.fig = plt.figure(figsize=(3,15))
@@ -54,7 +54,7 @@ class Animation():
         self.max_y = 100
         self.min_y = 0
 
-        # Axes インスタンスを作成
+        # Axesインスタンスを作成
         ax = self.fig.add_subplot(111)
 
         ax.set_xlim(self.min_x, self.max_x)
@@ -73,45 +73,47 @@ class Animation():
         # 凡例
         # ax.legend()
 
-        #学習時の状態データ
-        self.state_x = state_history[:,1]
-        self.state_y = state_history[:,2]
+        # 学習時の状態データ
+        self.state_x = state_history[:,0]
+        self.state_y = state_history[:,1]
+
+        # Initialize image data
+        self.color = []
+        self.vehicle_img, = ax.plot([], [], color="b")
+
+        self.num_loop = num_loop
 
     def plot_rectangle(self, center_x, center_y):
         # 初期化
-        self.vehicle_x = [] #位置を表す円のx
-        self.vehicle_y = [] #位置を表す円のy
+        self.vehicle_x = [] # 位置を表す円のx
+        self.vehicle_y = [] # 位置を表す円のy
         circle_size = 0.5
-        steps = 100 #円を書く分解能はこの程度で大丈夫
-        for i in range(steps):
-            self.vehicle_x.append(center_x + circle_size*math.cos(i*2*math.pi/steps))
-            self.vehicle_y.append(center_y + circle_size*math.sin(i*2*math.pi/steps))
+        Width = 1.7
+        Length = 4.7
+        # steps = 10 # 円を書く分解能はこの程度で大丈夫
+        #
+        # for i in range(steps):
+        #     self.vehicle_x.append(center_x + circle_size*math.cos(i*2*math.pi/steps))
+        #     self.vehicle_y.append(center_y + circle_size*math.sin(i*2*math.pi/steps))
+        self.vehicle_x = [center_x-Width/2, center_x+Width/2, center_x+Width/2, center_x-Width/2, center_x-Width/2]
+        self.vehicle_y = [center_y-Length/2, center_y-Length/2, center_y+Length/2, center_y+Length/2, center_y-Length/2]
 
-        self.vehicle_img.set_data(self.vehicle_x, self.vehicle_y)
-
-
+        self.vehicle_img.set_data(self.vehicle_x, self.vehicle_y) # ここでエラー
+        return self.vehicle_img,
 
     def update_anim(self, i):
+        if i>=self.num_loop:
+            self.close_figure()
+
         X = self.state_x[i]
         Y = self.state_y[i]
-        print(X, Y)
-        vehicle_img = self.plot_rectangle(X, Y)
+        # print(X, Y)
+        vehicle_img, = self.plot_rectangle(X, Y)
         return vehicle_img,
 
-
     def change_aspect_ratio(self, ax, ratio):
-        '''
-        This function change aspect ratio of figure.
-        Parameters:
-            ax: ax (matplotlit.pyplot.subplots())
-                Axes object
-            ratio: float or int
-                relative x axis width compared to y axis width.
-        '''
         aspect = (1/ratio) *(ax.get_xlim()[1] - ax.get_xlim()[0]) / (ax.get_ylim()[1] - ax.get_ylim()[0])
         ax.set_aspect(aspect)
 
     def close_figure(self):
-        # plt.cla()
-        # plt.clf()
         plt.close(self.fig)
